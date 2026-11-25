@@ -31,6 +31,7 @@ let intro = 0;
 let showHint = true;
 let hintStart = 0;
 let needsBuild = true;
+let startAt = 0;
 
 const N = 1300;
 
@@ -44,6 +45,7 @@ function setup() {
 
   needsBuild = true;
   hintStart = millis();
+  startAt = millis();
   wireUI();
 
   if (location.search.indexOf('clean') >= 0) {
@@ -432,7 +434,7 @@ function draw() {
   }
 
   if (hist.length > 160) hist.splice(0, hist.length - 160);
-  intro = Math.min(1.6, intro + 0.014);
+  intro = Math.min(1.6, (millis() - startAt) / 1000 * 0.62);
 
   image(base, 0, 0, width, height);
   image(ink, 0, 0, width, height);
