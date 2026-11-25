@@ -1,0 +1,5 @@
+.edge*/
+.edgeprofile/
+*.log
+.DS_Store
+Thumbs.db
