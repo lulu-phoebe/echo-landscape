@@ -31,6 +31,7 @@ let intro = 0;
 let showHint = true;
 let hintStart = 0;
 let needsBuild = true;
+let lastMove = 0;
 let startAt = 0;
 
 const N = 1300;
@@ -359,11 +360,15 @@ function fieldAngle(x, y) {
 function stepWorld(silent) {
   t += 1;
 
+  // 长时间没有互动时，墨自己变淡，避免越积越厚糊成一片白
+  const idleSec = (millis() - lastMove) / 1000;
+  const fade = idleSec > 5 ? 0.0028 + Math.min(0.012, (idleSec - 5) * 0.0016) : 0.0028;
+
   const c = ink.drawingContext;
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.globalCompositeOperation = 'destination-out';
-  c.fillStyle = 'rgba(0,0,0,0.0028)';
+  c.fillStyle = 'rgba(0,0,0,' + fade + ')';
   c.fillRect(0, 0, width, height);
   c.restore();
 
@@ -440,11 +445,27 @@ function draw() {
   image(ink, 0, 0, width, height);
   image(vignette, 0, 0, width, height);
 
+  drawScrim();
   drawSparks();
   drawType();
   if (showHint) drawHint();
 
   image(grain, 0, 0, width, height);
+}
+
+/* 左侧文字区的渐变底：让标题在墨很密的时候也读得清 */
+function drawScrim() {
+  const ctx = drawingContext;
+  const w = width * 0.34;
+  const g = ctx.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, rgba(P.paper, 0.92));
+  g.addColorStop(0.55, rgba(P.paper, 0.55));
+  g.addColorStop(1, rgba(P.paper, 0));
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, height);
+  ctx.restore();
 }
 
 function drawType() {
@@ -538,7 +559,7 @@ function drawHint() {
 
 /* ---------------- 输入 ---------------- */
 
-function pointerMove(x, y) { hist.push({ x: x, y: y }); }
+function pointerMove(x, y) { hist.push({ x: x, y: y }); lastMove = millis(); }
 function mouseMoved() { pointerMove(mouseX, mouseY); }
 function mouseDragged() { pointerMove(mouseX, mouseY); return false; }
 function touchMoved() { pointerMove(mouseX, mouseY); return false; }
@@ -621,6 +642,7 @@ function exportPNG() {
   image(base, 0, 0, width, height);
   image(ink, 0, 0, width, height);
   image(vignette, 0, 0, width, height);
+  drawScrim();
   drawType();
   image(grain, 0, 0, width, height);
   saveCanvas('山水的回响_' + (pi + 1) + '_' + nf(frameCount, 3), 'png');
